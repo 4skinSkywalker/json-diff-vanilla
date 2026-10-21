@@ -248,3 +248,35 @@
         }
     }
 }
+
+.json-input-panel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.json-input-field {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    font-weight: 600;
+}
+
+.json-input-field textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 240px;
+    padding: 10px;
+    resize: vertical;
+    border: 1px solid #c5c5c5;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+    .json-input-panel {
+        grid-template-columns: 1fr;
+    }
+}

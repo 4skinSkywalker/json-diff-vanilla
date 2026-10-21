@@ -22,11 +22,24 @@
         </div>
     </div>
 
+    <div class="json-input-panel">
+        <label class="json-input-field">
+            <span>Left JSON</span>
+            <textarea id="left-json" spellcheck="false" aria-label="Left JSON"></textarea>
+        </label>
+        <label class="json-input-field">
+            <span>Right JSON</span>
+            <textarea id="right-json" spellcheck="false" aria-label="Right JSON"></textarea>
+        </label>
+    </div>
+
     <script src="./json-compare.js"></script>
     <script>
         window.onload = function() {
             const jsonCompareUI = new JsonCompareUI('test', { left: 'Left JSON', right: 'Right JSON' });
-            jsonCompareUI.diff(`{
+            const leftInput = document.getElementById('left-json');
+            const rightInput = document.getElementById('right-json');
+            const leftJson = `{
   "name": "John",
   "age": 30,
   "city": "New York",
@@ -46,7 +59,8 @@
   "provaprova": "ciao",
   "total2": 2,
   "zeta": "New York"
-}`, `{
+}`;
+            const rightJson = `{
   "name": "Ema",
   "age": 50,
   "zeta": "New York",
@@ -65,7 +79,15 @@
   "yada": 1,
   "provaprova": "ciao",
   "total": 1
-}`);
+}`;
+
+            leftInput.value = leftJson;
+            rightInput.value = rightJson;
+
+            const updateDiff = () => jsonCompareUI.diff(leftInput.value, rightInput.value);
+            leftInput.addEventListener('input', updateDiff);
+            rightInput.addEventListener('input', updateDiff);
+            updateDiff();
         };
     </script>
 </body>
