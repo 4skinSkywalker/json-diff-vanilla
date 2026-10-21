@@ -364,6 +364,95 @@
         structurallyEqual
     };
 
+    const UI_TRANSLATIONS = {
+        en: {
+            showDifferences: 'Show differences only',
+            showAll: 'Show all',
+            swap: 'Swap sides',
+            provideBoth: 'Please provide JSON in both inputs',
+            invalidLeft: 'Invalid JSON in left input',
+            invalidRight: 'Invalid JSON in right input',
+            noDifferences: '✅ No differences found - JSON objects are identical',
+            differences: count => `Found ${count} ${count === 1 ? 'difference' : 'differences'}`,
+            unsafeNumber: value => `Unsafe JSON number: ${value}`,
+            nestingExceeded: max => `JSON nesting exceeds ${max} levels`,
+            comparisonError: message => `Comparison error: ${message}`
+        },
+        it: {
+            showDifferences: 'Mostra solo differenze',
+            showAll: 'Mostra tutto',
+            swap: 'Inverti lati',
+            provideBoth: 'Inserisci JSON in entrambi i campi',
+            invalidLeft: 'JSON non valido nel campo sinistro',
+            invalidRight: 'JSON non valido nel campo destro',
+            noDifferences: '✅ Nessuna differenza trovata - gli oggetti JSON sono identici',
+            differences: count => count === 1 ? 'Trovata 1 differenza' : `Trovate ${count} differenze`,
+            unsafeNumber: value => `Numero JSON non sicuro: ${value}`,
+            nestingExceeded: max => `L'annidamento JSON supera ${max} livelli`,
+            comparisonError: message => `Errore di confronto: ${message}`
+        },
+        de: {
+            showDifferences: 'Nur Unterschiede anzeigen',
+            showAll: 'Alles anzeigen',
+            swap: 'Seiten tauschen',
+            provideBoth: 'Bitte JSON in beide Felder eingeben',
+            invalidLeft: 'Ungültiges JSON in der linken Eingabe',
+            invalidRight: 'Ungültiges JSON in der rechten Eingabe',
+            noDifferences: '✅ Keine Unterschiede gefunden - JSON-Objekte sind identisch',
+            differences: count => `${count} ${count === 1 ? 'Unterschied' : 'Unterschiede'} gefunden`,
+            unsafeNumber: value => `Unsichere JSON-Zahl: ${value}`,
+            nestingExceeded: max => `JSON-Verschachtelung überschreitet ${max} Ebenen`,
+            comparisonError: message => `Vergleichsfehler: ${message}`
+        },
+        fr: {
+            showDifferences: 'Afficher uniquement les différences',
+            showAll: 'Tout afficher',
+            swap: 'Inverser les côtés',
+            provideBoth: 'Veuillez saisir du JSON dans les deux champs',
+            invalidLeft: 'JSON non valide dans le champ gauche',
+            invalidRight: 'JSON non valide dans le champ droit',
+            noDifferences: '✅ Aucune différence trouvée - les objets JSON sont identiques',
+            differences: count => `${count} ${count === 1 ? 'différence trouvée' : 'différences trouvées'}`,
+            unsafeNumber: value => `Nombre JSON non sécurisé : ${value}`,
+            nestingExceeded: max => `L'imbrication JSON dépasse ${max} niveaux`,
+            comparisonError: message => `Erreur de comparaison : ${message}`
+        },
+        es: {
+            showDifferences: 'Mostrar solo diferencias',
+            showAll: 'Mostrar todo',
+            swap: 'Intercambiar lados',
+            provideBoth: 'Introduce JSON en ambos campos',
+            invalidLeft: 'JSON no válido en el campo izquierdo',
+            invalidRight: 'JSON no válido en el campo derecho',
+            noDifferences: '✅ No se encontraron diferencias - los objetos JSON son idénticos',
+            differences: count => `${count} ${count === 1 ? 'diferencia encontrada' : 'diferencias encontradas'}`,
+            unsafeNumber: value => `Número JSON no seguro: ${value}`,
+            nestingExceeded: max => `El anidamiento JSON supera ${max} niveles`,
+            comparisonError: message => `Error de comparación: ${message}`
+        }
+    };
+
+    function getPreferredLanguage(browserNavigator = root.navigator) {
+        if (!browserNavigator) return 'en';
+        const languages = Array.isArray(browserNavigator.languages) ? browserNavigator.languages : [];
+        const preferences = [...languages, browserNavigator.language];
+        for (const preference of preferences) {
+            if (typeof preference !== 'string') continue;
+            const language = preference.toLowerCase().split(/[-_]/)[0];
+            if (Object.prototype.hasOwnProperty.call(UI_TRANSLATIONS, language)) return language;
+        }
+        return 'en';
+    }
+
+    function localizeError(error, messages) {
+        const message = error instanceof Error ? error.message : String(error);
+        const unsafeNumber = /^Unsafe JSON number: (.+)$/.exec(message);
+        if (unsafeNumber) return messages.unsafeNumber(unsafeNumber[1]);
+        const nestingExceeded = /^JSON nesting exceeds (\d+) levels$/.exec(message);
+        if (nestingExceeded) return messages.nestingExceeded(nestingExceeded[1]);
+        return message;
+    }
+
     class JsonCompareUI {
         constructor(id, opts = {}) {
             this.initializeElements(id, opts);
@@ -393,18 +482,21 @@
             const missing = Object.keys(requiredElements).filter(name => !requiredElements[name]);
             if (missing.length) throw new Error(`JSON diff container is missing required elements: ${missing.join(', ')}`);
             this.labels = { left, right };
+            this.messages = UI_TRANSLATIONS[getPreferredLanguage()];
             this.swapped = false;
             this.hideUnchanged = false;
             this.updateLabels();
 
-            this.showBtn.textContent = 'Mostra solo differenze';
+            this.showBtn.textContent = this.messages.showDifferences;
             this.showBtn.addEventListener('click', () => {
                 this.hideUnchanged = !this.hideUnchanged;
-                this.showBtn.textContent = this.hideUnchanged ? 'Mostra tutto' : 'Mostra solo differenze';
+                this.showBtn.textContent = this.hideUnchanged
+                    ? this.messages.showAll
+                    : this.messages.showDifferences;
                 this.diffView.classList.toggle('hide-unchanged', this.hideUnchanged);
             });
 
-            this.swapBtn.textContent = 'Scambia verso';
+            this.swapBtn.textContent = this.messages.swap;
             this.swapBtn.addEventListener('click', () => {
                 this.swapped = !this.swapped;
                 this.updateLabels();
@@ -435,7 +527,7 @@
             this.diffContent.textContent = '';
             if (typeof this.leftText !== 'string' || this.leftText.trim() === ''
                 || typeof this.rightText !== 'string' || this.rightText.trim() === '') {
-                this.showStatus('Please provide JSON in both inputs', 'error');
+                this.showStatus(this.messages.provideBoth, 'error');
                 return;
             }
 
@@ -444,13 +536,19 @@
             try {
                 leftJson = parseJsonText(this.leftText);
             } catch (error) {
-                this.showStatus(error instanceof RangeError ? error.message : 'Invalid JSON in left input', 'error');
+                this.showStatus(
+                    error instanceof RangeError ? localizeError(error, this.messages) : this.messages.invalidLeft,
+                    'error'
+                );
                 return;
             }
             try {
                 rightJson = parseJsonText(this.rightText);
             } catch (error) {
-                this.showStatus(error instanceof RangeError ? error.message : 'Invalid JSON in right input', 'error');
+                this.showStatus(
+                    error instanceof RangeError ? localizeError(error, this.messages) : this.messages.invalidRight,
+                    'error'
+                );
                 return;
             }
 
@@ -465,13 +563,13 @@
                 ));
                 this.showStatus(
                     result.differenceCount === 0
-                        ? '✅ No differences found - JSON objects are identical'
-                        : `Found ${result.differenceCount} differences`,
+                        ? this.messages.noDifferences
+                        : this.messages.differences(result.differenceCount),
                     'success'
                 );
             } catch (error) {
                 this.diffContent.textContent = '';
-                this.showStatus(`Comparison error: ${error.message}`, 'error');
+                this.showStatus(this.messages.comparisonError(localizeError(error, this.messages)), 'error');
             }
         }
 

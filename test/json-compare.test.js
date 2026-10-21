@@ -48,6 +48,24 @@ function createFakeDocument() {
     };
 }
 
+function withBrowserGlobals(navigatorValue, callback) {
+    const originalDocument = global.document;
+    const originalNavigator = Object.getOwnPropertyDescriptor(global, 'navigator');
+    const fake = createFakeDocument();
+    global.document = fake.document;
+    Object.defineProperty(global, 'navigator', {
+        configurable: true,
+        value: navigatorValue
+    });
+    try {
+        return callback(fake);
+    } finally {
+        global.document = originalDocument;
+        if (originalNavigator) Object.defineProperty(global, 'navigator', originalNavigator);
+        else delete global.navigator;
+    }
+}
+
 test('pairs adjacent changed object properties by key', () => {
     const result = JsonDiffEngine.compare(
         { name: 'John', age: 30, city: 'New York' },
@@ -203,13 +221,20 @@ test('uses bounded alignment for large arrays without shifting an insertion', ()
 
 test('browser UI renders rows, supports controls, and clears stale invalid input', () => {
     const originalDocument = global.document;
+    const originalNavigator = Object.getOwnPropertyDescriptor(global, 'navigator');
     const fake = createFakeDocument();
     global.document = fake.document;
+    Object.defineProperty(global, 'navigator', {
+        configurable: true,
+        value: { languages: ['en-US'], language: 'en-US' }
+    });
     try {
         const ui = new JsonCompareUI('test', { left: 'Before', right: 'After' });
+        assert.equal(fake.elements['.show-btn'].textContent, 'Show differences only');
+        assert.equal(fake.elements['.swap-btn'].textContent, 'Swap sides');
         ui.diff('{"value":1}', '{"value":2}');
         assert.ok(fake.elements['.diff-content'].children.length > 0);
-        assert.equal(fake.elements['.diff-status'].textContent, 'Found 1 differences');
+        assert.equal(fake.elements['.diff-status'].textContent, 'Found 1 difference');
 
         let changedRow = fake.elements['.diff-content'].children.find(row => row.className === 'diff-line changed');
         assert.deepEqual(changedRow.children.map(child => child.textContent), [
@@ -217,7 +242,7 @@ test('browser UI renders rows, supports controls, and clears stale invalid input
         ]);
 
         fake.elements['.show-btn'].listeners.click();
-        assert.equal(fake.elements['.show-btn'].textContent, 'Mostra tutto');
+        assert.equal(fake.elements['.show-btn'].textContent, 'Show all');
         assert.equal(fake.elements['.diff-view'].classList.contains('hide-unchanged'), true);
         fake.elements['.show-btn'].listeners.click();
         assert.equal(fake.elements['.diff-view'].classList.contains('hide-unchanged'), false);
@@ -243,7 +268,84 @@ test('browser UI renders rows, supports controls, and clears stale invalid input
         assert.equal(global.JsonCompareUI, JsonCompareUI);
     } finally {
         global.document = originalDocument;
+        if (originalNavigator) Object.defineProperty(global, 'navigator', originalNavigator);
+        else delete global.navigator;
     }
+});
+
+test('localizes controls and statuses from regional browser preferences', () => {
+    const cases = [
+        ['en-GB', 'Show differences only', 'Show all', 'Swap sides', 'Found 1 difference'],
+        ['it-IT', 'Mostra solo differenze', 'Mostra tutto', 'Inverti lati', 'Trovata 1 differenza'],
+        ['de-DE', 'Nur Unterschiede anzeigen', 'Alles anzeigen', 'Seiten tauschen', '1 Unterschied gefunden'],
+        ['fr-FR', 'Afficher uniquement les différences', 'Tout afficher', 'Inverser les côtés', '1 différence trouvée'],
+        ['es-ES', 'Mostrar solo diferencias', 'Mostrar todo', 'Intercambiar lados', '1 diferencia encontrada']
+    ];
+
+    for (const [language, showDifferences, showAll, swap, status] of cases) {
+        withBrowserGlobals({ languages: [language], language }, fake => {
+            const ui = new JsonCompareUI('test');
+            assert.equal(fake.elements['.show-btn'].textContent, showDifferences);
+            assert.equal(fake.elements['.swap-btn'].textContent, swap);
+            fake.elements['.show-btn'].listeners.click();
+            assert.equal(fake.elements['.show-btn'].textContent, showAll);
+            ui.diff('{"value":1}', '{"value":2}');
+            assert.equal(fake.elements['.diff-status'].textContent, status);
+        });
+    }
+});
+
+test('uses the first supported browser language and falls back to English', () => {
+    withBrowserGlobals({ languages: ['nl-NL', 'es-MX', 'it-IT'], language: 'de-DE' }, fake => {
+        new JsonCompareUI('test');
+        assert.equal(fake.elements['.show-btn'].textContent, 'Mostrar solo diferencias');
+    });
+
+    withBrowserGlobals({ languages: ['nl-NL'], language: 'pt-BR' }, fake => {
+        const ui = new JsonCompareUI('test');
+        assert.equal(fake.elements['.show-btn'].textContent, 'Show differences only');
+        ui.diff('', '{}');
+        assert.equal(fake.elements['.diff-status'].textContent, 'Please provide JSON in both inputs');
+    });
+
+    withBrowserGlobals({ languages: ['nl-NL'], language: 'de-AT' }, fake => {
+        new JsonCompareUI('test');
+        assert.equal(fake.elements['.show-btn'].textContent, 'Nur Unterschiede anzeigen');
+    });
+});
+
+test('localizes validation, identical, plural, and engine error statuses', () => {
+    withBrowserGlobals({ languages: ['it-IT'], language: 'it-IT' }, fake => {
+        const ui = new JsonCompareUI('test');
+
+        ui.diff('', '{}');
+        assert.equal(fake.elements['.diff-status'].textContent, 'Inserisci JSON in entrambi i campi');
+        ui.diff('{broken', '{}');
+        assert.equal(fake.elements['.diff-status'].textContent, 'JSON non valido nel campo sinistro');
+        ui.diff('{}', '{}');
+        assert.equal(
+            fake.elements['.diff-status'].textContent,
+            '✅ Nessuna differenza trovata - gli oggetti JSON sono identici'
+        );
+        ui.diff('{"a":1,"b":2}', '{"a":2,"b":3}');
+        assert.equal(fake.elements['.diff-status'].textContent, 'Trovate 2 differenze');
+        ui.diff('{"id":9007199254740992}', '{}');
+        assert.equal(
+            fake.elements['.diff-status'].textContent,
+            'Numero JSON non sicuro: 9007199254740992'
+        );
+    });
+
+    withBrowserGlobals({ languages: ['fr-FR'], language: 'fr-FR' }, fake => {
+        const ui = new JsonCompareUI('test');
+        let deeplyNested = 'null';
+        for (let depth = 0; depth < 502; depth++) deeplyNested = `[${deeplyNested}]`;
+        ui.diff(deeplyNested, deeplyNested);
+        assert.equal(
+            fake.elements['.diff-status'].textContent,
+            "Erreur de comparaison : L'imbrication JSON dépasse 500 niveaux"
+        );
+    });
 });
 
 test('browser UI accepts selector metacharacters in container identifiers', () => {
