@@ -1,30 +1,30 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "agent": {
+  "agents": {
     "bmad-quick": {
-      "description": "BMAD Quick Flow: specifica e implementazione rapida di feature circoscritte.",
+      "description": "BMAD Build: turns implementation work into working code, reviewed and verified.",
       "mode": "primary",
-      "prompt": "{file:./_bmad/bmm/agents/quick-flow-solo-dev.md}"
+      "system": "{file:../.agents/skills/bmad-build/SKILL.md}"
     },
     "bmad-pm": {
-      "description": "BMAD Product Manager: requisiti, PRD, scope ed epic.",
+      "description": "BMAD Product Manager: requirements discovery and PRD creation.",
       "mode": "primary",
-      "prompt": "{file:./_bmad/bmm/agents/pm.md}"
+      "system": "{file:../.agents/skills/bmad-agent-pm/SKILL.md}"
     },
     "bmad-architect": {
-      "description": "BMAD Architect: architettura e decisioni tecniche.",
+      "description": "BMAD System Architect: technical architecture and solution design.",
       "mode": "primary",
-      "prompt": "{file:./_bmad/bmm/agents/architect.md}"
+      "system": "{file:../.agents/skills/bmad-agent-architect/SKILL.md}"
     },
     "bmad-sm": {
-      "description": "BMAD Scrum Master: preparazione delle story e pianificazione dello sprint.",
+      "description": "BMAD Sprint Planning: implementation readiness, sprint tracking, and status reporting.",
       "mode": "primary",
-      "prompt": "{file:./_bmad/bmm/agents/sm.md}"
+      "system": "{file:../.agents/skills/bmad-sprint-planning/SKILL.md}"
     },
     "bmad-dev": {
-      "description": "BMAD Developer: implementazione delle story, test e code review.",
+      "description": "BMAD Senior Software Engineer: story implementation, testing, and code changes.",
       "mode": "primary",
-      "prompt": "{file:./_bmad/bmm/agents/dev.md}"
+      "system": "{file:../.agents/skills/bmad-agent-dev/SKILL.md}"
     }
   }
 }
