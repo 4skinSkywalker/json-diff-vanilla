@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./json-diff.css">
+</head>
+<body>
+    <div class="json-diff-container" data-id="test">
+        <div class="actions">
+            <button type="button" class="show-btn"></button>
+            <button type="button" class="swap-btn"></button>
+            <span class="diff-status status"></span>
+        </div>
+        <div class="diff-view">
+            <div class="diff-header">
+                <div class="diff-column left-column"></div>
+                <div class="diff-column right-column"></div>
+            </div>
+            <div class="diff-content"></div>
+        </div>
+    </div>
+
+    <script src="./json-compare.js"></script>
+    <script>
+        window.onload = function() {
+            const jsonCompareUI = new JsonCompareUI('test', { left: 'Left JSON', right: 'Right JSON' });
+            jsonCompareUI.diff(`{
+  "name": "John",
+  "age": 30,
+  "city": "New York",
+  "test": [
+    "porcodrillo",
+    "tony",
+    {
+        "alfa": 1,
+        "prova": 3
+    },
+    {
+        "beta": 1,
+        "prova": 3
+    }
+  ],
+  "yada": 1,
+  "provaprova": "ciao",
+  "total2": 2,
+  "zeta": "New York"
+}`, `{
+  "name": "Ema",
+  "age": 50,
+  "zeta": "New York",
+  "magnaCappe": 8,
+  "test": [
+    "mandrillo",
+    "tony",
+    {
+        "prova": 1,
+        "test": 2
+    },
+    {
+        "delta": 1
+    }
+  ],
+  "yada": 1,
+  "provaprova": "ciao",
+  "total": 1
+}`);
+        };
+    </script>
+</body>
+</html>

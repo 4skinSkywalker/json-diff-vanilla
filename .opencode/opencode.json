@@ -1,0 +1,30 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "bmad-quick": {
+      "description": "BMAD Quick Flow: specifica e implementazione rapida di feature circoscritte.",
+      "mode": "primary",
+      "prompt": "{file:./_bmad/bmm/agents/quick-flow-solo-dev.md}"
+    },
+    "bmad-pm": {
+      "description": "BMAD Product Manager: requisiti, PRD, scope ed epic.",
+      "mode": "primary",
+      "prompt": "{file:./_bmad/bmm/agents/pm.md}"
+    },
+    "bmad-architect": {
+      "description": "BMAD Architect: architettura e decisioni tecniche.",
+      "mode": "primary",
+      "prompt": "{file:./_bmad/bmm/agents/architect.md}"
+    },
+    "bmad-sm": {
+      "description": "BMAD Scrum Master: preparazione delle story e pianificazione dello sprint.",
+      "mode": "primary",
+      "prompt": "{file:./_bmad/bmm/agents/sm.md}"
+    },
+    "bmad-dev": {
+      "description": "BMAD Developer: implementazione delle story, test e code review.",
+      "mode": "primary",
+      "prompt": "{file:./_bmad/bmm/agents/dev.md}"
+    }
+  }
+}
